@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 	"strings"
 
@@ -30,4 +31,6 @@ func InitLogger() {
 	default:
 		Log.SetLevel(logrus.WarnLevel)
 	}
+
+	log.Printf("Logger initialized in %s mode", env)
 }

@@ -11,6 +11,7 @@ func main() {
 	//Inisialisasi config
 	config.LoadEnv() //env
 	config.InitLogger() //logger
+	config.ConnectDB() //database
 
 	//inisialisasi fiber app
 	app := fiber.New()
@@ -22,7 +23,7 @@ func main() {
 	routes.AuthRoutes(app)
 
 	//jalankan server
-	port := config.GetEnv("APP_PORT")
-	app.Listen(":" + port)
-	config.Log.Infof("Starting server on port %s", port)
+	appPort := config.GetEnv("APP_PORT")
+	app.Listen(":" + appPort)
+	config.Log.Infof("Starting server on port %s", appPort)
 }
