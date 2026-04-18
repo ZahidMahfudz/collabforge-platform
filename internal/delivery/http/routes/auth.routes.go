@@ -10,4 +10,6 @@ func AuthRoutes(app *fiber.App) {
 	auth.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Login Page")
 	})
+
+	
 }
