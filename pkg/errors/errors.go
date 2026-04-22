@@ -10,6 +10,10 @@ func (e *AppError) Error() string {
 	return e.Message
 }
 
+func New(message string, code string, status int) *AppError {
+	return NewAppError(code, message, status)
+}
+
 //helper untuk membuat error baru
 func NewAppError(code string, message string, status int) *AppError {
 	return &AppError{
@@ -17,4 +21,4 @@ func NewAppError(code string, message string, status int) *AppError {
 		Message: message,
 		Status:  status,
 	}
-}	
+}
