@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -12,7 +11,8 @@ import (
 func ConnectDB() *pgxpool.Pool {
 	//load env
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+		Logger.Fatalf("Error loading .env file: %v", err)
+		
 	}
 
 	//ambil konfigurasi dari env
@@ -33,15 +33,15 @@ func ConnectDB() *pgxpool.Pool {
 	//koneksikan ke database
 	dbpool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
+		Logger.Fatalf("Unable to connect to database: %v", err)
 	}
 
 	//cek koneksi dengan ping
 	if err := dbpool.Ping(ctx); err != nil {
-		log.Fatalf("Unable to ping database: %v", err)
+		Logger.Fatalf("Unable to ping database: %v", err)
 	}
 
-	log.Printf("Successfully connected to database %s at %s:%s", dbname, host, port)
+	Logger.Infof("Successfully connected to database %s at %s:%s", dbname, host, port)
 
 	return dbpool
 }

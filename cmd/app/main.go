@@ -1,39 +1,51 @@
 package main
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/zahidmahfudz/collabforge-platform/config"
-	"github.com/zahidmahfudz/collabforge-platform/internal/delivery/http/controller"
-	"github.com/zahidmahfudz/collabforge-platform/internal/delivery/http/routes"
 	"github.com/zahidmahfudz/collabforge-platform/internal/middleware"
-	"github.com/zahidmahfudz/collabforge-platform/internal/repository"
-	"github.com/zahidmahfudz/collabforge-platform/internal/usecase"
 )
 
 func main() {
 	//Inisialisasi config
 	config.LoadEnv()    //env
 	config.InitLogger() //logger
-	db := config.ConnectDB() //database
+	config.ConnectDB()  //database
 
-	// Dependency Injection
-	userRepo := repository.NewUserRepository(db)
-	secretKey := config.GetEnv("PASETO_SECRET_KEY")
-	googleClientID := config.GetEnv("GOOGLE_CLIENT_ID")
-	authUsecase := usecase.NewAuthUsecase(userRepo, secretKey, googleClientID)
-	authController := controller.NewAuthController(authUsecase)
+	//simpan variabel logger untuk digunakan dengan mudah
+	var Logger = config.Logger
 
 	//inisialisasi fiber app
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		IdleTimeout: time.Second * 30,
+		WriteTimeout: time.Second * 30,
+		ReadTimeout: time.Second * 30,
+	})
 
 	//logger sederhana untuk setiap request
 	app.Use(middleware.RequestLogger())
 
-	//inisialisasi routes
-	routes.AuthRoutes(app, authController)
+	app.Get("/", func(ctx *fiber.Ctx) error {
+		Logger.Debug("memasuki endpoint root")
+		Logger.Debug("mengirim response welcome message")
+		return ctx.SendString("Hello, welcome to our API!")
+	})
+
+	app.Get("/health", func(ctx *fiber.Ctx) error {
+		Logger.Debug("memasuki endpoint health")
+		Logger.Debug("mengirim response health check")
+		return ctx.JSON(fiber.Map{
+			"status": "healthy",
+		})
+	})
 
 	//jalankan server
 	appPort := config.GetEnv("APP_PORT")
-	config.Log.Infof("Starting server on port %s", appPort)
-	app.Listen(":" + appPort)
+	Logger.Infof("Starting server on port %s", appPort)
+	err := app.Listen(":" + appPort)
+	if err != nil {
+		Logger.Fatal("Failed to start server")
+	}
 }
