@@ -3,7 +3,7 @@ module github.com/zahidmahfudz/collabforge-platform
 go 1.25.1
 
 require (
-	github.com/gofiber/fiber/v2 v2.52.12
+	github.com/gofiber/fiber/v2 v2.52.13
 	github.com/jackc/pgx/v5 v5.9.1
 	github.com/joho/godotenv v1.5.1
 	github.com/o1egl/paseto/v2 v2.1.1

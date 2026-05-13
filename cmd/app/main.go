@@ -24,6 +24,9 @@ func main() {
 		ReadTimeout: time.Second * 30,
 	})
 
+	// gunakan middleware CORS untuk mengizinkan akses dari frontend
+	app.Use(middleware.CORSMiddleware())
+
 	//logger sederhana untuk setiap request
 	app.Use(middleware.RequestLogger())
 
