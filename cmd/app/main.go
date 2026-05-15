@@ -5,14 +5,29 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/zahidmahfudz/collabforge-platform/config"
+	"github.com/zahidmahfudz/collabforge-platform/internal/controller"
 	"github.com/zahidmahfudz/collabforge-platform/internal/middleware"
+	"github.com/zahidmahfudz/collabforge-platform/internal/repository"
+	"github.com/zahidmahfudz/collabforge-platform/internal/routes"
+	"github.com/zahidmahfudz/collabforge-platform/internal/usecase"
+	"github.com/zahidmahfudz/collabforge-platform/utils"
 )
 
 func main() {
 	//Inisialisasi config
 	config.LoadEnv()    //env
 	config.InitLogger() //logger
-	config.ConnectDB()  //database
+	db := config.ConnectDB()  //database
+	utils.InitValidator() //validator
+
+	//dependency injection untuk repository, usecase, dan controller
+
+	//inisialisasi repository, usecase, dan controller untuk auth
+	userRepo := repository.NewUserRepository(db)
+	authUseCase := usecase.NewAuthUseCase(userRepo)
+	authController := controller.NewAuthController(authUseCase)
+
+	//inisialisasi repository, usecase, dan controller untuk fitur lain bisa ditambahkan di sini dengan pola yang sama
 
 	//simpan variabel logger untuk digunakan dengan mudah
 	var Logger = config.Logger
@@ -43,6 +58,9 @@ func main() {
 			"status": "healthy",
 		})
 	})
+
+	//daftarkan route untuk auth
+	routes.AuthRoutes(app, authController)
 
 	//jalankan server
 	appPort := config.GetEnv("APP_PORT")

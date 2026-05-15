@@ -22,7 +22,7 @@ func RequestLogger() fiber.Handler {
 			"status":  c.Response().StatusCode(),
 			"latency": time.Since(start).String(),
 			"ip":      c.IP(),
-		}).Info("Endpoint accessed")
+		}).Info("transaksi request telah selesai")
 
 		return err
 	}
