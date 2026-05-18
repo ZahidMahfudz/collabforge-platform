@@ -85,3 +85,10 @@ collabforge-platform/
 |__ go.mod                      # dependency management
 |__ go.sum
 ```
+<br />
+
+## Entity Relationship Diagram (sementara)
+
+berikut ini merupakan erd dari collabfore yang memuat entitas-entitas yang terlibat dalam aplikasi untuk memodelkan data yang akan disimpan. untuk dokumentasi lengkap dapat dilihat di [ERD](0_docs/product/ERD.md)
+
+![ERD collabforge](0_docs/img/ERD.png)
