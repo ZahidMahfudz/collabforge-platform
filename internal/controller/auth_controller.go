@@ -5,6 +5,7 @@ import (
 	"github.com/zahidmahfudz/collabforge-platform/config"
 	"github.com/zahidmahfudz/collabforge-platform/internal/dto/request"
 	"github.com/zahidmahfudz/collabforge-platform/internal/usecase"
+	"github.com/zahidmahfudz/collabforge-platform/utils/response"
 )
 
 var Logger = config.Logger
@@ -29,19 +30,14 @@ func (c *AuthController) Register(ctx *fiber.Ctx) error {
 	result, err := c.authUseCase.Register(ctx.Context(), req)
 	if err != nil {
 		Logger.Errorf("Error saat register: %v", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"message": "register failed",
-			"error":   err.Error(),
-		})
+		if err.Error() == "EMAIL_ALREADY_EXISTS" {
+			return response.Error(ctx, fiber.StatusConflict, "email sudah ada", "EMAIL_ALREADY_EXISTS")
+		}
+		return response.Error(ctx, fiber.StatusInternalServerError, "internal server error", "INTERNAL_SERVER_ERROR")
 	}
 	Logger.Debug("usecase register berhasil, menunggu response untuk dikirim ke client")
 	
 
 	Logger.Debug("register berhasil, mengirim response")
-	return ctx.JSON(fiber.Map{
-		"success": true,
-		"message": "register success",
-		"data": result,
-	})
+	return response.Success(ctx, fiber.StatusOK, "register success", result)
 }

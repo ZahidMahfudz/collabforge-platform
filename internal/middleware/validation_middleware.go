@@ -3,6 +3,7 @@ package middleware
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/zahidmahfudz/collabforge-platform/utils"
+	"github.com/zahidmahfudz/collabforge-platform/utils/response"
 )
 
 
@@ -17,11 +18,7 @@ func ValidateRequest[T any]() fiber.Handler {
 		if err := c.BodyParser(&body); err != nil {
 			Logger.Debugf("gagal parse request body: %v", err)
 
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"message": "invalid request body",
-				"error":   "BAD_REQUEST",
-			})
+			return response.Error(c, fiber.StatusBadRequest, "invalid request body", "BAD_REQUEST")
 		}
 
 		Logger.Debugf("sukses parse request body untuk tipe: %T", *new(T))
@@ -30,11 +27,7 @@ func ValidateRequest[T any]() fiber.Handler {
 		if err := utils.Validate.Struct(body); err != nil {
 			Logger.Debugf("validasi gagal: %v", err)
 
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"success": false,
-				"message": "validation failed",
-				"errors":  utils.FormatValidationError(err),
-			})
+			return response.Error(c, fiber.StatusBadRequest, "validation failed", utils.FormatValidationError(err))
 		}
 
 		Logger.Debugf("validasi sukses untuk tipe: %T", *new(T))

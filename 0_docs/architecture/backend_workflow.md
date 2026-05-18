@@ -19,11 +19,11 @@ main.go
    ↓
 routes
    ↓
-middleware
+middleware (auth & validasi request) -> req.locals (hasil validasi disimpan di req.locals)
    ↓
 controller
    ↓
-dto request
+req.locals (jika method post)
    ↓
 usecase
    ↓
@@ -56,6 +56,7 @@ Tugas:
 - register middleware
 - register routes
 - menjalankan server
+- dependecy injection
 
 ---
 
@@ -66,9 +67,9 @@ Layer yang bertugas mendefinisikan endpoint API dan menghubungkan endpoint ke co
 Contoh:
 
 ```go
-auth.Post("/register", authController.Register)
+authGroup.Post("/register", middleware.ValidateRequest[request.RegisterRequest](), authController.Register)
 ```
-
+ditambahkan juga middleware untuk validasi request dengan memanggil validasi request kemudian [ini struct dari body req yang didefinisikan didalam dto/request] lalu setelahnya diteruskan kedalam controller
 ---
 
 ## 3. Middleware
