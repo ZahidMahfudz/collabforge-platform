@@ -4,11 +4,16 @@ import "time"
 
 type User struct {
 	ID string
-	Name string
+	FirstName string
+	LastName string
+	MidName string
+	Username string
 	Email string
 	PasswordHash string
 	Provider string
 	ProviderID string
+	Bio string
+	AvatarURL string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

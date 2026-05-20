@@ -33,7 +33,7 @@ Menyimpan data akun pengguna platform.
 | mid_name | varchar | nama tengah |
 | username | varchar | username unik |
 | email | varchar | email user |
-| password | varchar | password hash |
+| password_hash | varchar | password hash |
 | provider | enum(local, google) | metode login |
 | provider_id | varchar | id provider OAuth |
 | bio | text | deskripsi user |

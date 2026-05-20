@@ -64,11 +64,16 @@ func (u *AuthUseCase) Register(ctx context.Context,req request.RegisterRequest,)
 	// mapping entity
 	user := entity.User{
 		ID:           id,
-		Name:         req.Name,
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
+		MidName:      req.MidName,
+		Username:     req.Username,
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
 		Provider:     "local",
 		ProviderID:   "",
+		Bio:          "",
+		AvatarURL:    "",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -85,7 +90,7 @@ func (u *AuthUseCase) Register(ctx context.Context,req request.RegisterRequest,)
 	// mapping response
 	return &dtoresponse.RegisterResponse{
 		ID:    user.ID,
-		Name:  user.Name,
+		Name:  user.FirstName + " " + user.MidName + " " + user.LastName,
 		Email: user.Email,
 	}, nil
 }
