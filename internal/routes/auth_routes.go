@@ -7,12 +7,19 @@ import (
 	"github.com/zahidmahfudz/collabforge-platform/internal/middleware"
 )
 
-func AuthRoutes(app *fiber.App, authController *controller.AuthController) {
+func AuthRoutes(app *fiber.App, authController *controller.AuthController, authMiddleware *middleware.AuthMiddleware) {
 	//route group untuk auth
 	authGroup := app.Group("/auth")
 
 	//endpoint register
 	authGroup.Post("/register", middleware.ValidateRequest[request.RegisterRequest](), authController.Register)
 
+
+	//testing auth middleware, endpoint ini hanya bisa diakses dengan token yang valid
+	authGroup.Get("/protected", authMiddleware.Protect(), func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"message": "you have access to this protected route",
+		})
+	})
 
 }

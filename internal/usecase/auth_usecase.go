@@ -10,6 +10,7 @@ import (
 	dtoresponse "github.com/zahidmahfudz/collabforge-platform/internal/dto/response"
 	"github.com/zahidmahfudz/collabforge-platform/internal/entity"
 	"github.com/zahidmahfudz/collabforge-platform/internal/repository"
+	"github.com/zahidmahfudz/collabforge-platform/internal/service/token"
 	"github.com/zahidmahfudz/collabforge-platform/utils"
 
 	"golang.org/x/crypto/bcrypt"
@@ -19,10 +20,11 @@ var Logger = config.Logger
 
 type AuthUseCase struct {
 	userRepo *repository.UserRepository
+	pasetoService *token.PasetoService
 }
 
-func NewAuthUseCase(userRepo *repository.UserRepository) *AuthUseCase {
-	return &AuthUseCase{userRepo: userRepo,}
+func NewAuthUseCase(userRepo *repository.UserRepository, pasetoService *token.PasetoService) *AuthUseCase {
+	return &AuthUseCase{userRepo: userRepo, pasetoService: pasetoService}
 }
 
 func (u *AuthUseCase) Register(ctx context.Context,req request.RegisterRequest,) (*dtoresponse.RegisterResponse, error) {

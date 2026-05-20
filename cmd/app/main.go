@@ -9,6 +9,7 @@ import (
 	"github.com/zahidmahfudz/collabforge-platform/internal/middleware"
 	"github.com/zahidmahfudz/collabforge-platform/internal/repository"
 	"github.com/zahidmahfudz/collabforge-platform/internal/routes"
+	"github.com/zahidmahfudz/collabforge-platform/internal/service/token"
 	"github.com/zahidmahfudz/collabforge-platform/internal/usecase"
 	"github.com/zahidmahfudz/collabforge-platform/utils"
 )
@@ -24,8 +25,10 @@ func main() {
 
 	//inisialisasi repository, usecase, dan controller untuk auth
 	userRepo := repository.NewUserRepository(db)
-	authUseCase := usecase.NewAuthUseCase(userRepo)
+	pasetoService := token.NewPasetoService()
+	authUseCase := usecase.NewAuthUseCase(userRepo, pasetoService)
 	authController := controller.NewAuthController(authUseCase)
+	authMiddleware := middleware.NewAuthMiddleware(pasetoService)
 
 	//inisialisasi repository, usecase, dan controller untuk fitur lain bisa ditambahkan di sini dengan pola yang sama
 
@@ -60,7 +63,7 @@ func main() {
 	})
 
 	//daftarkan route untuk auth
-	routes.AuthRoutes(app, authController)
+	routes.AuthRoutes(app, authController, authMiddleware)
 
 	//jalankan server
 	appPort := config.GetEnv("APP_PORT")
