@@ -25,8 +25,9 @@ func main() {
 
 	//inisialisasi repository, usecase, dan controller untuk auth
 	userRepo := repository.NewUserRepository(db)
+	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
 	pasetoService := token.NewPasetoService()
-	authUseCase := usecase.NewAuthUseCase(userRepo, pasetoService)
+	authUseCase := usecase.NewAuthUseCase(userRepo, refreshTokenRepo, pasetoService)
 	authController := controller.NewAuthController(authUseCase)
 	authMiddleware := middleware.NewAuthMiddleware(pasetoService)
 

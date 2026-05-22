@@ -51,7 +51,7 @@ func (c *AuthController) Login(ctx *fiber.Ctx) error {
 
 	//mengirim data ke usecase untuk proses login
 	Logger.Debug("Mengirim data ke usecase untuk proses login")
-	result, err := c.authUseCase.Login(ctx.Context(), req)
+	result, refreshToken, err := c.authUseCase.Login(ctx.Context(), req)
 	if err != nil {
 		Logger.Errorf("Error saat login: %v", err)
 		if err.Error() == "INVALID_CREDENTIALS" {
@@ -64,6 +64,14 @@ func (c *AuthController) Login(ctx *fiber.Ctx) error {
 		return response.Error(ctx, fiber.StatusInternalServerError, "internal server error", "INTERNAL_SERVER_ERROR")
 	}
 	Logger.Debug("usecase login berhasil, menunggu response untuk dikirim ke client")
+
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HTTPOnly: true,
+		Secure:   false, // Set to true in production with HTTPS
+		SameSite: "lax",
+	})
 
 	Logger.Debug("login berhasil, mengirim response")
 	return response.Success(ctx, fiber.StatusOK, "login success", result)

@@ -20,11 +20,12 @@ var Logger = config.Logger
 
 type AuthUseCase struct {
 	userRepo *repository.UserRepository
+	refreshTokenRepo *repository.RefreshTokenRepository
 	pasetoService *token.PasetoService
 }
 
-func NewAuthUseCase(userRepo *repository.UserRepository, pasetoService *token.PasetoService) *AuthUseCase {
-	return &AuthUseCase{userRepo: userRepo, pasetoService: pasetoService}
+func NewAuthUseCase(userRepo *repository.UserRepository, refreshTokenRepo *repository.RefreshTokenRepository, pasetoService *token.PasetoService) *AuthUseCase {
+	return &AuthUseCase{userRepo: userRepo, refreshTokenRepo: refreshTokenRepo, pasetoService: pasetoService}
 }
 
 func (u *AuthUseCase) Register(ctx context.Context,req request.RegisterRequest,) (*dtoresponse.RegisterResponse, error) {
@@ -95,14 +96,14 @@ func (u *AuthUseCase) Register(ctx context.Context,req request.RegisterRequest,)
 	}, nil
 }
 
-func (u *AuthUseCase) Login(ctx context.Context, req request.LoginRequest) (*dtoresponse.LoginResponse, error) {
+func (u *AuthUseCase) Login(ctx context.Context, req request.LoginRequest) (*dtoresponse.LoginResponse, string, error) {
 	Logger.Debug("Memasuki Login UseCase")
 
 	user, err := u.userRepo.FindByEmail(ctx, req.Email)
 
 	if err != nil {
 		Logger.Errorf("Error saat mencari user: %v", err)
-		return nil, errors.New("INVALID_CREDENTIALS")
+		return nil, "", errors.New("INVALID_CREDENTIALS")
 	}
 	Logger.Debugf("User ditemukan: %+v", user)
 
@@ -110,7 +111,7 @@ func (u *AuthUseCase) Login(ctx context.Context, req request.LoginRequest) (*dto
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
 	if err != nil {
 		Logger.Errorf("Error saat membandingkan password: %v", err)
-		return nil, errors.New("INVALID_CREDENTIALS")
+		return nil, "", errors.New("INVALID_CREDENTIALS")
 	}
 	Logger.Debug("Password valid")
 
@@ -118,9 +119,47 @@ func (u *AuthUseCase) Login(ctx context.Context, req request.LoginRequest) (*dto
 	accessToken, err := u.pasetoService.GenerateAccessToken(user.ID, user.Email, 5*time.Minute)
 	if err != nil {
 		Logger.Errorf("Error saat menghasilkan access token: %v", err)
-		return nil, errors.New("FAILED_TO_GENERATE_TOKEN")
+		return nil, "", errors.New("FAILED_TO_GENERATE_TOKEN")
 	}
 	Logger.Debug("Access token berhasil dibuat")
+
+	// generate refresh token
+	refreshToken, err := u.pasetoService.GenerateRefreshToken(user.ID, 7*24*time.Hour)
+	if err != nil {
+		Logger.Errorf("Error saat menghasilkan refresh token: %v", err)
+		return nil, "", errors.New("FAILED_TO_GENERATE_TOKEN")
+	}
+	Logger.Debug("Refresh token berhasil dibuat")
+
+	// hash refresh token sebelum disimpan ke database
+	refreshTokenHash, err := utils.HashToken(refreshToken)
+	if err != nil {
+		Logger.Errorf("Error saat menghash refresh token: %v", err)
+		return nil, "", errors.New("FAILED_TO_GENERATE_TOKEN")
+	}
+
+	// generate id untuk refresh token
+	refreshTokenID, err := utils.GenerateID("rft")
+	if err != nil {
+		Logger.Errorf("Error saat menghasilkan ID refresh token: %v", err)
+		return nil, "", errors.New("FAILED_TO_GENERATE_TOKEN")
+	}
+
+	// mapping entity refresh token
+	refreshTokenEntity := entity.RefreshToken{
+		ID: refreshTokenID,
+		UserID: user.ID,
+		TokenHash: refreshTokenHash,
+		ExpiresAt: time.Now().Add(7*24*time.Hour),
+		CreatedAt: time.Now(),
+	}
+
+	// simpan refresh token ke database
+	err = u.refreshTokenRepo.CreateRefreshToken(ctx, &refreshTokenEntity)
+	if err != nil {
+		Logger.Errorf("Error saat menyimpan refresh token: %v", err)
+		return nil, "", errors.New("FAILED_TO_GENERATE_TOKEN")
+	}
 
 	// mapping response
 	return &dtoresponse.LoginResponse{
@@ -131,5 +170,5 @@ func (u *AuthUseCase) Login(ctx context.Context, req request.LoginRequest) (*dto
 		Username: user.Username,
 		Email: user.Email,
 		AccessToken: accessToken,
-	}, nil
+	}, refreshToken, nil
 }

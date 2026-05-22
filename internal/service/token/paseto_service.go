@@ -78,3 +78,18 @@ func (p *PasetoService) VerifyToken(tokenStr string) (*paseto.Token, error) {
 	}
 	return token, nil
 }
+
+func (p *PasetoService) GenerateRefreshToken(userID string, duration time.Duration,) (string, error) {
+	Logger.Debugf("Memasuki fungsi GenerateRefreshToken untuk userID: %s", userID)
+	now := time.Now()
+
+	token := paseto.NewToken()
+
+	token.SetIssuedAt(now)
+	token.SetExpiration(now.Add(duration))
+	token.SetSubject(userID)
+
+	token.SetString("type", "refresh")
+	Logger.Debugf("Refresh token berhasil dibuat untuk userID: %s", userID)
+	return token.V4Encrypt(p.key, nil), nil
+}
