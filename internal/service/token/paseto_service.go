@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"aidanwoods.dev/go-paseto"
+	"github.com/google/uuid"
 	"github.com/zahidmahfudz/collabforge-platform/config"
 )
 
@@ -36,19 +37,36 @@ func NewPasetoService() *PasetoService {
 	}
 }
 
-func (p *PasetoService) GenerateAccessToken(UserId string, Email string, duration time.Duration) (string, error) {
+func (p *PasetoService) GenerateAccessToken(userID string,email string,duration time.Duration,) (string, error) {
+	Logger.Debugf("Memasuki fungsi GenerateAccessToken untuk userID: %s, email: %s", userID, email)
 	now := time.Now()
-	expired := now.Add(duration)
 
 	token := paseto.NewToken()
 
 	token.SetIssuedAt(now)
-	token.SetExpiration(expired)
 
-	token.SetString("user_id", UserId)
-	token.SetString("email", Email)
+	token.SetExpiration(
+		now.Add(duration),
+	)
 
-	signed := token.V4Encrypt(p.key, nil)
+	token.SetNotBefore(now)
+
+	token.SetSubject(userID)
+
+	token.SetIssuer("collabforge-api")
+
+	token.SetAudience("collabforge-client")
+
+	token.SetJti(uuid.NewString())
+
+	token.SetString("email", email)
+
+	signed := token.V4Encrypt(
+		p.key,
+		nil,
+	)
+
+	Logger.Debugf("Token berhasil dibuat untuk userID: %s, email: %s", userID, email)
 
 	return signed, nil
 }

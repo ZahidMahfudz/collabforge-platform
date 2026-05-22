@@ -94,3 +94,42 @@ func (u *AuthUseCase) Register(ctx context.Context,req request.RegisterRequest,)
 		Email: user.Email,
 	}, nil
 }
+
+func (u *AuthUseCase) Login(ctx context.Context, req request.LoginRequest) (*dtoresponse.LoginResponse, error) {
+	Logger.Debug("Memasuki Login UseCase")
+
+	user, err := u.userRepo.FindByEmail(ctx, req.Email)
+
+	if err != nil {
+		Logger.Errorf("Error saat mencari user: %v", err)
+		return nil, errors.New("INVALID_CREDENTIALS")
+	}
+	Logger.Debugf("User ditemukan: %+v", user)
+
+	// cek password
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
+	if err != nil {
+		Logger.Errorf("Error saat membandingkan password: %v", err)
+		return nil, errors.New("INVALID_CREDENTIALS")
+	}
+	Logger.Debug("Password valid")
+
+	// generate access token
+	accessToken, err := u.pasetoService.GenerateAccessToken(user.ID, user.Email, 5*time.Minute)
+	if err != nil {
+		Logger.Errorf("Error saat menghasilkan access token: %v", err)
+		return nil, errors.New("FAILED_TO_GENERATE_TOKEN")
+	}
+	Logger.Debug("Access token berhasil dibuat")
+
+	// mapping response
+	return &dtoresponse.LoginResponse{
+		ID: user.ID,
+		FirstName: user.FirstName,
+		LastName: user.LastName,
+		MidName: user.MidName,
+		Username: user.Username,
+		Email: user.Email,
+		AccessToken: accessToken,
+	}, nil
+}

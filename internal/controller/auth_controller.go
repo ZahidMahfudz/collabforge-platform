@@ -41,3 +41,31 @@ func (c *AuthController) Register(ctx *fiber.Ctx) error {
 	Logger.Debug("register berhasil, mengirim response")
 	return response.Success(ctx, fiber.StatusOK, "register success", result)
 }
+
+func (c *AuthController) Login(ctx *fiber.Ctx) error {
+	Logger.Debug("memasuki fungsi Login di AuthController")
+
+	// ambil validated body dari middleware
+	req := ctx.Locals("validatedBody").(request.LoginRequest)
+	Logger.Debugf("data yang diterima: %+v", req)
+
+	//mengirim data ke usecase untuk proses login
+	Logger.Debug("Mengirim data ke usecase untuk proses login")
+	result, err := c.authUseCase.Login(ctx.Context(), req)
+	if err != nil {
+		Logger.Errorf("Error saat login: %v", err)
+		if err.Error() == "INVALID_CREDENTIALS" {
+			return response.Error(ctx, fiber.StatusUnauthorized, "email atau password salah", "INVALID_CREDENTIALS")
+		}
+		if err.Error() == "FAILED_TO_GENERATE_TOKEN" {
+			return response.Error(ctx, fiber.StatusInternalServerError, "gagal menghasilkan token", "FAILED_TO_GENERATE_TOKEN")
+		}
+
+		return response.Error(ctx, fiber.StatusInternalServerError, "internal server error", "INTERNAL_SERVER_ERROR")
+	}
+	Logger.Debug("usecase login berhasil, menunggu response untuk dikirim ke client")
+
+	Logger.Debug("login berhasil, mengirim response")
+	return response.Success(ctx, fiber.StatusOK, "login success", result)
+
+}

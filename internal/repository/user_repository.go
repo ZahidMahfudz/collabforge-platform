@@ -54,3 +54,32 @@ func (r *UserRepository) IsEmailExists(ctx context.Context, email string) (bool,
 
 	return exists, err
 }
+
+// TEMUKAN USER BERDASARKAN EMAIL
+func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entity.User, error) {
+	query := `SELECT id, first_name, last_name, mid_name, username, email, password_hash, provider, provider_id, bio, avatar_url, created_at, updated_at FROM users WHERE email=$1`
+
+	var user entity.User
+
+	err := r.db.QueryRow(ctx, query, email).Scan(
+		&user.ID,
+		&user.FirstName,
+		&user.LastName,
+		&user.MidName,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Provider,
+		&user.ProviderID,
+		&user.Bio,
+		&user.AvatarURL,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
