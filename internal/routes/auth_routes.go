@@ -13,9 +13,10 @@ func AuthRoutes(app *fiber.App, authController *controller.AuthController, authM
 
 	//endpoint register
 	authGroup.Post("/register", middleware.ValidateRequest[request.RegisterRequest](), authController.Register)
-
 	//endpoint login
 	authGroup.Post("/login", middleware.ValidateRequest[request.LoginRequest](), authController.Login)
+	// endpoint refresh token
+	authGroup.Post("/refresh", authController.RefreshToken)
 
 	//testing auth middleware, endpoint ini hanya bisa diakses dengan token yang valid
 	authGroup.Get("/protected", authMiddleware.Protect(), func(c *fiber.Ctx) error {

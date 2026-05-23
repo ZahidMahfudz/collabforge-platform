@@ -27,7 +27,7 @@ func (r *RefreshTokenRepository) CreateRefreshToken(ctx context.Context, token *
 
 func (r *RefreshTokenRepository) FindByToken(ctx context.Context, tokenHash string) (*entity.RefreshToken, error) {
 	query := `
-		SELECT id, user_id, token_hash, expires_at, revoked, created_at, updated_at 
+		SELECT id, user_id, token_hash, expires_at, revoked_at, created_at, updated_at 
 		FROM refresh_tokens 
 		WHERE token_hash = $1
 	`
@@ -50,7 +50,7 @@ func (r *RefreshTokenRepository) FindByToken(ctx context.Context, tokenHash stri
 func (r *RefreshTokenRepository) RevokeToken(ctx context.Context, tokenID string) error {
 	query := `
 		UPDATE refresh_tokens
-		SET revoked = NOW(), updated_at = NOW()
+		SET revoked_at = NOW(), updated_at = NOW()
 		WHERE id = $1
 	`
 

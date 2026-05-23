@@ -77,3 +77,34 @@ func (c *AuthController) Login(ctx *fiber.Ctx) error {
 	return response.Success(ctx, fiber.StatusOK, "login success", result)
 
 }
+
+func (c *AuthController) RefreshToken(ctx *fiber.Ctx) error {
+	Logger.Debug("memasuki fungsi RefreshToken di AuthController")
+
+	// ambil refresh token dari cookie
+	refreshToken := ctx.Cookies("refresh_token")
+	if refreshToken == "" {
+		Logger.Debug("refresh token tidak ditemukan di cookie")
+		return response.Error(ctx, fiber.StatusUnauthorized, "refresh token tidak ditemukan", "REFRESH_TOKEN_NOT_FOUND")
+	}
+	Logger.Debugf("refresh token ditemukan: %s", refreshToken)
+
+	// kirim ke usecase untuk proses refresh token
+	result, newRefreshToken, err := c.authUseCase.RefreshToken(ctx.Context(), refreshToken)
+	if err != nil {
+		Logger.Errorf("Error saat refresh token: %v", err)
+		return response.Error(ctx, fiber.StatusUnauthorized, "refresh token tidak valid", "INVALID_REFRESH_TOKEN")
+	}
+
+	// set cookie untuk refresh token baru
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    newRefreshToken,
+		HTTPOnly: true,
+		Secure:   false, // Set to true in production with HTTPS
+		SameSite: "lax",
+	})
+
+	Logger.Debug("refresh token berhasil, mengirim response")
+	return response.Success(ctx, fiber.StatusOK, "refresh token success", result)
+}
