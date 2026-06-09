@@ -39,7 +39,7 @@ func (c *AuthController) Register(ctx *fiber.Ctx) error {
 	
 
 	Logger.Debug("register berhasil, mengirim response")
-	return response.Success(ctx, fiber.StatusOK, "register success", result)
+	return response.Success(ctx, fiber.StatusCreated, "register success", result)
 }
 
 func (c *AuthController) Login(ctx *fiber.Ctx) error {
