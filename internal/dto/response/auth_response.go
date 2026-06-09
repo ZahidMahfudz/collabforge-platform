@@ -19,3 +19,7 @@ type LoginResponse struct {
 type RefreshTokenResponse struct {
 	AccessToken string `json:"access_token"`
 }
+
+type LogoutResponse struct {
+	Message string `json:"message"`
+}

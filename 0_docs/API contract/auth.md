@@ -213,3 +213,86 @@ Tidak diperlukan
 
 ### Notes
 Refresh Token yang tersimpan di cookie terganti dengan refresh token yang baru
+
+<br>
+
+## Logout
+Keluar dari sistem dan mencabut refresh token
+
+### Endpoint
+```
+POST /auth/logout
+```
+
+### Authentication
+```
+cookie
+
+refresh_token
+```
+
+### Request Body
+```
+Tidak diperlukan
+```
+
+### Success Response
+```
+200 OK
+
+{
+    "success": true,
+    "message": "logout success",
+    "data": {
+        "message": "logout berhasil"
+    }
+}
+```
+
+### Cookie
+| name          | Value | Domain    | Path | Expires | HttpOnly | Secure |
+| ------------- | ----- | --------- | ---- | ------- | -------- | ------ |
+| refresh_token | ""    | localhost | /    | -1      | true     | false  |
+
+### Error Response
+```
+401 Unauthorized
+
+{
+    "success": false,
+    "message": "refresh token tidak ditemukan",
+    "details": "REFRESH_TOKEN_NOT_FOUND"
+}
+```
+```
+401 Unauthorized
+
+{
+    "success": false,
+    "message": "refresh token tidak valid",
+    "details": "INVALID_REFRESH_TOKEN"
+}
+```
+```
+400 Bad Request
+
+{
+    "success": false,
+    "message": "refresh token sudah direvoke",
+    "details": "REFRESH_TOKEN_ALREADY_REVOKED"
+}
+```
+```
+500 Internal Server Error
+
+{
+    "success": false,
+    "message": "gagal mencabut token",
+    "details": "FAILED_TO_REVOKE_TOKEN"
+}
+```
+
+### Notes
+- Refresh token akan direvoke dari database
+- Cookie refresh_token akan dihapus dari client
+- Setelah logout, user perlu login kembali untuk mendapatkan access token baru

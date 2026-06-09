@@ -108,3 +108,44 @@ func (c *AuthController) RefreshToken(ctx *fiber.Ctx) error {
 	Logger.Debug("refresh token berhasil, mengirim response")
 	return response.Success(ctx, fiber.StatusOK, "refresh token success", result)
 }
+
+func (c *AuthController) Logout(ctx *fiber.Ctx) error {
+	Logger.Debug("memasuki fungsi Logout di AuthController")
+
+	// ambil refresh token dari cookie
+	refreshToken := ctx.Cookies("refresh_token")
+	if refreshToken == "" {
+		Logger.Debug("refresh token tidak ditemukan di cookie")
+		return response.Error(ctx, fiber.StatusUnauthorized, "refresh token tidak ditemukan", "REFRESH_TOKEN_NOT_FOUND")
+	}
+	Logger.Debugf("refresh token ditemukan: %s", refreshToken)
+
+	// kirim ke usecase untuk proses logout
+	result, err := c.authUseCase.Logout(ctx.Context(), refreshToken)
+	if err != nil {
+		Logger.Errorf("Error saat logout: %v", err)
+		if err.Error() == "INVALID_REFRESH_TOKEN" {
+			return response.Error(ctx, fiber.StatusUnauthorized, "refresh token tidak valid", "INVALID_REFRESH_TOKEN")
+		}
+		if err.Error() == "REFRESH_TOKEN_ALREADY_REVOKED" {
+			return response.Error(ctx, fiber.StatusBadRequest, "refresh token sudah direvoke", "REFRESH_TOKEN_ALREADY_REVOKED")
+		}
+		if err.Error() == "FAILED_TO_REVOKE_TOKEN" {
+			return response.Error(ctx, fiber.StatusInternalServerError, "gagal mencabut token", "FAILED_TO_REVOKE_TOKEN")
+		}
+		return response.Error(ctx, fiber.StatusInternalServerError, "internal server error", "INTERNAL_SERVER_ERROR")
+	}
+
+	// hapus cookie refresh_token
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		HTTPOnly: true,
+		Secure:   false, // Set to true in production with HTTPS
+		SameSite: "lax",
+		MaxAge:   -1, // menghapus cookie
+	})
+
+	Logger.Debug("logout berhasil, cookie dihapus, mengirim response")
+	return response.Success(ctx, fiber.StatusOK, "logout success", result)
+}

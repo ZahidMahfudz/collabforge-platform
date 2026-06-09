@@ -291,3 +291,61 @@ func (u *AuthUseCase) RefreshToken(ctx context.Context, refreshToken string) (*d
 	}, accessToken, nil
 
 }
+
+func (u *AuthUseCase) Logout(ctx context.Context, refreshToken string) (*dtoresponse.LogoutResponse, error) {
+	Logger.Debug("Memasuki Logout UseCase")
+
+	// verifikasi refresh token
+	token, err := u.pasetoService.VerifyToken(refreshToken)
+	if err != nil {
+		Logger.Errorf("Error saat memverifikasi refresh token: %v", err)
+		return nil, errors.New("INVALID_REFRESH_TOKEN")
+	}
+
+	// cek tipe token
+	tokenType, err := token.GetString("type")
+	if err != nil || tokenType != "refresh" {
+		Logger.Debug("Token yang diberikan bukan refresh token")
+		return nil, errors.New("INVALID_REFRESH_TOKEN")
+	}
+
+	// hash refresh token untuk dicocokkan dengan database
+	refreshTokenHash, err := utils.HashToken(refreshToken)
+	if err != nil {
+		Logger.Errorf("Error saat menghash refresh token: %v", err)
+		return nil, errors.New("INVALID_REFRESH_TOKEN")
+	}
+
+	// cari refresh token di database
+	storedToken, err := u.refreshTokenRepo.FindByToken(ctx, refreshTokenHash)
+	if err != nil {
+		Logger.Errorf("Error saat mencari refresh token di database: %v", err)
+		return nil, errors.New("INVALID_REFRESH_TOKEN")
+	}
+	Logger.Debugf("Refresh token ditemukan di database: %+v", storedToken)
+
+	// cek apakah token sudah direvoke
+	if storedToken.Revoked != nil {
+		Logger.Debug("Refresh token sudah direvoke sebelumnya")
+		return nil, errors.New("REFRESH_TOKEN_ALREADY_REVOKED")
+	}
+
+	// cek expired refresh token
+	if time.Now().After(storedToken.ExpiresAt) {
+		Logger.Debug("Refresh token sudah expired")
+		return nil, errors.New("INVALID_REFRESH_TOKEN")
+	}
+
+	// revoke refresh token
+	err = u.refreshTokenRepo.RevokeToken(ctx, storedToken.ID)
+	if err != nil {
+		Logger.Errorf("Error saat merevoke refresh token: %v", err)
+		return nil, errors.New("FAILED_TO_REVOKE_TOKEN")
+	}
+	Logger.Debug("Refresh token berhasil direvoke")
+
+	// mapping response
+	return &dtoresponse.LogoutResponse{
+		Message: "logout berhasil",
+	}, nil
+}
