@@ -17,6 +17,12 @@ type LoginResponse struct {
 }
 
 type RefreshTokenResponse struct {
+	ID string `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName string `json:"last_name"`
+	MidName string `json:"mid_name"`
+	Username string `json:"username"`
+	Email string `json:"email"`
 	AccessToken string `json:"access_token"`
 }
 

@@ -287,8 +287,15 @@ func (u *AuthUseCase) RefreshToken(ctx context.Context, refreshToken string) (*d
 
 	// mapping response
 	return &dtoresponse.RefreshTokenResponse{
-		AccessToken: accessToken,
-	}, accessToken, nil
+		ID: user.ID,
+		FirstName: user.FirstName,
+		LastName: user.LastName,
+		MidName: user.MidName,
+		Username: user.Username,
+		Email: user.Email,
+		AccessToken: accessToken,}, 
+		newRefreshToken, 
+		nil
 
 }
 
