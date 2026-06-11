@@ -1,6 +1,8 @@
+# CollabForge Backend
+
 ## About This
 
-CollabForge adalah platform portofolio berbasis kontribusi nyata dalam proyek.
+Ini adalah Aplikasi Backend untuk CollabForge, platform portofolio berbasis kontribusi nyata dalam proyek.
 
 Platform ini dirancang untuk membantu membangun portofolio yang lebih jujur, terukur, dan dapat diverifikasi berdasarkan aktivitas dan kontribusi pengguna di dalam proyek yang mereka kerjakan.
 
@@ -24,6 +26,7 @@ Fokus utama platform ini adalah membangun sistem reputasi dan portofolio berbasi
 | Language            | Golang                        |
 | Framework           | Fiber                         |
 | Database            | PostgreSQL                    |
+| Storage            | MinIo (dev)                    |
 | Database Driver     | pgx                           |
 | Query Style         | Raw SQL                       |
 | Authentication      | PASETO                        |
@@ -92,3 +95,6 @@ collabforge-platform/
 berikut ini merupakan erd dari collabfore yang memuat entitas-entitas yang terlibat dalam aplikasi untuk memodelkan data yang akan disimpan. untuk dokumentasi lengkap dapat dilihat di [ERD](0_docs/product/ERD.md)
 
 ![ERD collabforge](0_docs/img/ERD.png)
+
+## Dokumentasi API
+dokumentasi lengkap mengenai API dapat dilihat di [API_CONTRACT](0_docs/API%20contract/README.md)
