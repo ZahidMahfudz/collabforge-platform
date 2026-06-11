@@ -9,6 +9,7 @@ import (
 	"github.com/zahidmahfudz/collabforge-platform/internal/middleware"
 	"github.com/zahidmahfudz/collabforge-platform/internal/repository"
 	"github.com/zahidmahfudz/collabforge-platform/internal/routes"
+	"github.com/zahidmahfudz/collabforge-platform/internal/service/storage"
 	"github.com/zahidmahfudz/collabforge-platform/internal/service/token"
 	"github.com/zahidmahfudz/collabforge-platform/internal/usecase"
 	"github.com/zahidmahfudz/collabforge-platform/utils"
@@ -16,10 +17,16 @@ import (
 
 func main() {
 	//Inisialisasi config
-	config.LoadEnv()    //env
-	config.InitLogger() //logger
-	db := config.ConnectDB()  //database
-	utils.InitValidator() //validator
+	config.LoadEnv()         //env
+	config.InitLogger()      //logger
+	db := config.ConnectDB() //database
+	utils.InitValidator()    //validator
+	minioClient, err := storage.NewMinioClient()
+	if err != nil {
+		config.Logger.Fatalf("Failed to initialize Minio client: %v", err)
+	}
+
+	storageService := storage.NewMinioStorage(minioClient, "collabforge")
 
 	//dependency injection untuk repository, usecase, dan controller
 
@@ -31,6 +38,10 @@ func main() {
 	authController := controller.NewAuthController(authUseCase)
 	authMiddleware := middleware.NewAuthMiddleware(pasetoService)
 
+	//inisialisasi repository, usecase, dan controller untuk profile
+	profileUseCase := usecase.NewProfileUseCase(storageService)
+	profileController := controller.NewProfileController(profileUseCase)
+
 	//inisialisasi repository, usecase, dan controller untuk fitur lain bisa ditambahkan di sini dengan pola yang sama
 
 	//simpan variabel logger untuk digunakan dengan mudah
@@ -38,9 +49,9 @@ func main() {
 
 	//inisialisasi fiber app
 	app := fiber.New(fiber.Config{
-		IdleTimeout: time.Second * 30,
+		IdleTimeout:  time.Second * 30,
 		WriteTimeout: time.Second * 30,
-		ReadTimeout: time.Second * 30,
+		ReadTimeout:  time.Second * 30,
 	})
 
 	// gunakan middleware CORS untuk mengizinkan akses dari frontend
@@ -66,10 +77,13 @@ func main() {
 	//daftarkan route untuk auth
 	routes.AuthRoutes(app, authController, authMiddleware)
 
+	//daftarkan route untuk profile
+	routes.ProfileRoutes(app, profileController, authMiddleware)
+
 	//jalankan server
 	appPort := config.GetEnv("APP_PORT")
 	Logger.Infof("Starting server on port %s", appPort)
-	err := app.Listen(":" + appPort)
+	err = app.Listen(":" + appPort)
 	if err != nil {
 		Logger.Fatal("Failed to start server")
 	}

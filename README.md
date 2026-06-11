@@ -26,7 +26,7 @@ Fokus utama platform ini adalah membangun sistem reputasi dan portofolio berbasi
 | Language            | Golang                        |
 | Framework           | Fiber                         |
 | Database            | PostgreSQL                    |
-| Storage            | MinIo (dev)                    |
+| Storage             | MinIo (dev)                    |
 | Database Driver     | pgx                           |
 | Query Style         | Raw SQL                       |
 | Authentication      | PASETO                        |
