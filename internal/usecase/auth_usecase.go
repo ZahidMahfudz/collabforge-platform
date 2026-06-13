@@ -10,6 +10,7 @@ import (
 	dtoresponse "github.com/zahidmahfudz/collabforge-platform/internal/dto/response"
 	"github.com/zahidmahfudz/collabforge-platform/internal/entity"
 	"github.com/zahidmahfudz/collabforge-platform/internal/repository"
+	"github.com/zahidmahfudz/collabforge-platform/internal/service/storage"
 	"github.com/zahidmahfudz/collabforge-platform/internal/service/token"
 	"github.com/zahidmahfudz/collabforge-platform/utils"
 
@@ -19,27 +20,28 @@ import (
 var Logger = config.Logger
 
 type AuthUseCase struct {
-	userRepo *repository.UserRepository
+	userRepo         *repository.UserRepository
 	refreshTokenRepo *repository.RefreshTokenRepository
-	pasetoService *token.PasetoService
+	pasetoService    *token.PasetoService
+	StorageService   *storage.MinioStorage
 }
 
-func NewAuthUseCase(userRepo *repository.UserRepository, refreshTokenRepo *repository.RefreshTokenRepository, pasetoService *token.PasetoService) *AuthUseCase {
-	return &AuthUseCase{userRepo: userRepo, refreshTokenRepo: refreshTokenRepo, pasetoService: pasetoService}
+func NewAuthUseCase(userRepo *repository.UserRepository, refreshTokenRepo *repository.RefreshTokenRepository, pasetoService *token.PasetoService, storageService *storage.MinioStorage) *AuthUseCase {
+	return &AuthUseCase{userRepo: userRepo, refreshTokenRepo: refreshTokenRepo, pasetoService: pasetoService, StorageService: storageService}
 }
 
-func (u *AuthUseCase) Register(ctx context.Context,req request.RegisterRequest,) (*dtoresponse.RegisterResponse, error) {
+func (u *AuthUseCase) Register(ctx context.Context, req request.RegisterRequest) (*dtoresponse.RegisterResponse, error) {
 	Logger.Debug("Memasuki Register UseCase")
 
 	// cek email exists
-	exists, err := u.userRepo.IsEmailExists(ctx,req.Email)
+	exists, err := u.userRepo.IsEmailExists(ctx, req.Email)
 	if err != nil {
-		Logger.Errorf("Error cek email: %v",err)
+		Logger.Errorf("Error cek email: %v", err)
 		return nil, err
 	}
 
 	if exists {
-		Logger.Debug("Email sudah terdaftar",)
+		Logger.Debug("Email sudah terdaftar")
 		return nil, errors.New(
 			"EMAIL_ALREADY_EXISTS",
 		)
@@ -73,14 +75,12 @@ func (u *AuthUseCase) Register(ctx context.Context,req request.RegisterRequest,)
 		PasswordHash: string(hashedPassword),
 		Provider:     "local",
 		ProviderID:   "",
-		Bio:          "",
-		AvatarURL:    "",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
 
 	// save database
-	err = u.userRepo.CreateUser(ctx,&user,)
+	err = u.userRepo.CreateUser(ctx, &user)
 
 	if err != nil {
 		return nil, err
@@ -147,10 +147,10 @@ func (u *AuthUseCase) Login(ctx context.Context, req request.LoginRequest) (*dto
 
 	// mapping entity refresh token
 	refreshTokenEntity := entity.RefreshToken{
-		ID: refreshTokenID,
-		UserID: user.ID,
+		ID:        refreshTokenID,
+		UserID:    user.ID,
 		TokenHash: refreshTokenHash,
-		ExpiresAt: time.Now().Add(7*24*time.Hour),
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 		CreatedAt: time.Now(),
 	}
 
@@ -163,12 +163,12 @@ func (u *AuthUseCase) Login(ctx context.Context, req request.LoginRequest) (*dto
 
 	// mapping response
 	return &dtoresponse.LoginResponse{
-		ID: user.ID,
-		FirstName: user.FirstName,
-		LastName: user.LastName,
-		MidName: user.MidName,
-		Username: user.Username,
-		Email: user.Email,
+		ID:          user.ID,
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
+		MidName:     user.MidName,
+		Username:    user.Username,
+		Email:       user.Email,
 		AccessToken: accessToken,
 	}, refreshToken, nil
 }
@@ -271,10 +271,10 @@ func (u *AuthUseCase) RefreshToken(ctx context.Context, refreshToken string) (*d
 
 	// mapping entity refresh token baru
 	newRefreshTokenEntity := entity.RefreshToken{
-		ID: newRefreshTokenID,
-		UserID: user.ID,
+		ID:        newRefreshTokenID,
+		UserID:    user.ID,
 		TokenHash: newRefreshTokenHash,
-		ExpiresAt: time.Now().Add(7*24*time.Hour),
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 		CreatedAt: time.Now(),
 	}
 
@@ -287,14 +287,14 @@ func (u *AuthUseCase) RefreshToken(ctx context.Context, refreshToken string) (*d
 
 	// mapping response
 	return &dtoresponse.RefreshTokenResponse{
-		ID: user.ID,
-		FirstName: user.FirstName,
-		LastName: user.LastName,
-		MidName: user.MidName,
-		Username: user.Username,
-		Email: user.Email,
-		AccessToken: accessToken,}, 
-		newRefreshToken, 
+			ID:          user.ID,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+			MidName:     user.MidName,
+			Username:    user.Username,
+			Email:       user.Email,
+			AccessToken: accessToken},
+		newRefreshToken,
 		nil
 
 }

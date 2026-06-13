@@ -19,6 +19,10 @@ func AuthRoutes(app *fiber.App, authController *controller.AuthController, authM
 	authGroup.Post("/refresh", authController.RefreshToken)
 	// endpoint logout
 	authGroup.Post("/logout", authController.Logout)
+	// login dengan google
+	authGroup.Get("/google/login", authController.GoogleLogin)
+	// Google call back
+	authGroup.Get("/google/callback", authController.GoogleCallBack)
 
 	//testing auth middleware, endpoint ini hanya bisa diakses dengan token yang valid
 	authGroup.Get("/protected", authMiddleware.Protect(), func(c *fiber.Ctx) error {

@@ -9,6 +9,7 @@ import (
 	"github.com/zahidmahfudz/collabforge-platform/internal/middleware"
 	"github.com/zahidmahfudz/collabforge-platform/internal/repository"
 	"github.com/zahidmahfudz/collabforge-platform/internal/routes"
+	"github.com/zahidmahfudz/collabforge-platform/internal/service"
 	"github.com/zahidmahfudz/collabforge-platform/internal/service/storage"
 	"github.com/zahidmahfudz/collabforge-platform/internal/service/token"
 	"github.com/zahidmahfudz/collabforge-platform/internal/usecase"
@@ -21,25 +22,26 @@ func main() {
 	config.InitLogger()      //logger
 	db := config.ConnectDB() //database
 	utils.InitValidator()    //validator
-	minioClient, err := storage.NewMinioClient()
-	if err != nil {
-		config.Logger.Fatalf("Failed to initialize Minio client: %v", err)
-	}
+	config.InitGoogleAuth()  //google oauth
 
-	storageService := storage.NewMinioStorage(minioClient, "collabforge")
+	//Inisialisasi storage service (Minio)
+	minioClient, err := storage.NewMinioStorage(config.GetEnv("MINIO_ENDPOINT"), config.GetEnv("MINIO_ACCESS_KEY"), config.GetEnv("MINIO_SECRET_KEY"), config.GetEnv("MINIO_BUCKET_NAME"))
 
 	//dependency injection untuk repository, usecase, dan controller
+
+	//inisialisasi google service
+	googleService := service.NewGoogleAuthService()
 
 	//inisialisasi repository, usecase, dan controller untuk auth
 	userRepo := repository.NewUserRepository(db)
 	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
 	pasetoService := token.NewPasetoService()
-	authUseCase := usecase.NewAuthUseCase(userRepo, refreshTokenRepo, pasetoService)
-	authController := controller.NewAuthController(authUseCase)
+	authUseCase := usecase.NewAuthUseCase(userRepo, refreshTokenRepo, pasetoService, minioClient)
+	authController := controller.NewAuthController(authUseCase, googleService)
 	authMiddleware := middleware.NewAuthMiddleware(pasetoService)
 
 	//inisialisasi repository, usecase, dan controller untuk profile
-	profileUseCase := usecase.NewProfileUseCase(storageService)
+	profileUseCase := usecase.NewProfileUseCase(minioClient)
 	profileController := controller.NewProfileController(profileUseCase)
 
 	//inisialisasi repository, usecase, dan controller untuk fitur lain bisa ditambahkan di sini dengan pola yang sama

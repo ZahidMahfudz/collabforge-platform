@@ -8,13 +8,13 @@ import (
 )
 
 type ProfileUseCase struct {
-	storage storage.StorageService
+	StorageService *storage.MinioStorage
 }
 
-func NewProfileUseCase(storage storage.StorageService) *ProfileUseCase {
-	return &ProfileUseCase{storage: storage}
+func NewProfileUseCase(storageService *storage.MinioStorage) *ProfileUseCase {
+	return &ProfileUseCase{StorageService: storageService}
 }
 
 func (u *ProfileUseCase) GetAvatarURL(ctx context.Context) (string, error) {
-	return u.storage.GetPresignedURL(ctx, "avatar/foto_zahid (1) (1).jpg", 15*time.Minute)
+	return u.StorageService.GetPresignedURL(ctx, "avatar/foto_zahid (1) (1).jpg", 15*time.Minute)
 }

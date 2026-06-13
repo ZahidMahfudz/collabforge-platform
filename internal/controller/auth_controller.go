@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/zahidmahfudz/collabforge-platform/config"
 	"github.com/zahidmahfudz/collabforge-platform/internal/dto/request"
+	"github.com/zahidmahfudz/collabforge-platform/internal/service"
 	"github.com/zahidmahfudz/collabforge-platform/internal/usecase"
 	"github.com/zahidmahfudz/collabforge-platform/utils/response"
 )
@@ -11,11 +12,12 @@ import (
 var Logger = config.Logger
 
 type AuthController struct {
-	authUseCase *usecase.AuthUseCase
+	authUseCase   *usecase.AuthUseCase
+	googleService *service.GoogleAuthService
 }
 
-func NewAuthController(authUseCase *usecase.AuthUseCase) *AuthController {
-	return &AuthController{authUseCase: authUseCase}
+func NewAuthController(authUseCase *usecase.AuthUseCase, googleService *service.GoogleAuthService) *AuthController {
+	return &AuthController{authUseCase: authUseCase, googleService: googleService}
 }
 
 func (c *AuthController) Register(ctx *fiber.Ctx) error {
@@ -36,7 +38,6 @@ func (c *AuthController) Register(ctx *fiber.Ctx) error {
 		return response.Error(ctx, fiber.StatusInternalServerError, "internal server error", "INTERNAL_SERVER_ERROR")
 	}
 	Logger.Debug("usecase register berhasil, menunggu response untuk dikirim ke client")
-	
 
 	Logger.Debug("register berhasil, mengirim response")
 	return response.Success(ctx, fiber.StatusCreated, "register success", result)
@@ -148,4 +149,24 @@ func (c *AuthController) Logout(ctx *fiber.Ctx) error {
 
 	Logger.Debug("logout berhasil, cookie dihapus, mengirim response")
 	return response.Success(ctx, fiber.StatusOK, "logout success", result)
+}
+
+func (c *AuthController) GoogleLogin(ctx *fiber.Ctx) error {
+	url := c.googleService.GetLoginURL()
+
+	return ctx.Redirect(url)
+}
+
+func (c *AuthController) GoogleCallBack(ctx *fiber.Ctx) error {
+	code := ctx.Query("code")
+	if code == "" {
+		return response.Error(ctx, fiber.StatusBadRequest, "Code google call back not found", "INTERNAL_SERVER_ERROR")
+	}
+
+	user, err := c.googleService.GetuserByCode(code)
+	if err != nil {
+		return response.Error(ctx, fiber.StatusInternalServerError, "Gagal memuat user", "INTERNAL_SERVER_ERROR")
+	}
+
+	return response.Success(ctx, fiber.StatusOK, "Google call back success", user)
 }
